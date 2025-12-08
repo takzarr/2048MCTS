@@ -191,9 +191,15 @@ def get_valid_actions(grid):
             valid.append(action)
     return valid
 
-#check for number of valid actions (no actions means gameover)
-def gameover(grid):
-    return len(get_valid_actions(grid)) == 0
-
+#get max tile value from grid
 def max_tile(grid):
     return max(max(row) for row in grid)    
+
+#check for number of valid actions or max tile equal to 2048
+def gameover(grid):
+    if len(get_valid_actions(grid)) == 0:
+        return True
+    elif max_tile(grid) == 2048:
+        return True
+    else:
+        return False
