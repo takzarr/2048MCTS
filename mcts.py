@@ -21,14 +21,11 @@ def play_random_game():
 
     while not gameover(grid):
         actions = get_valid_actions(grid)
-        if not actions:
-            break
         action = random.choice(actions)
         grid, score_gain, moved = apply_action(grid, action)
-        if not moved:
-            continue
-        total_score += score_gain
-        moves += 1
+        if moved:
+            total_score += score_gain
+            moves += 1
 
     return total_score, max_tile(grid), moves
 
@@ -102,8 +99,8 @@ def mcts_search(root_state, num_simulations=50, c_param=1.414):
         #EXPANSION (use expand leaf node by 1 node and choose new expanded child leaf node)
         # if node's state is not gameover and has untried actions
         if (not node.is_terminal()) and node.untried_actions:
-            # get the first untried action in the list (maybe change this to be randomized?)
-            action = node.untried_actions.pop()
+            # get a randomized untried action in the list
+            action = random.choice(node.untried_actions)
             # do action on node's state
             new_state, _, _ = apply_action(deepcopy(node.state), action)
             # create new instance on MCTS node storing the new state, parent node, and action
@@ -125,8 +122,6 @@ def mcts_search(root_state, num_simulations=50, c_param=1.414):
             node = node.parent # move to next lower branch
 
     #Choose child with highest visit count
-    if not root.children:
-        return None
     best_child = max(root.children, key=lambda n: n.visits)
     return best_child.action
 
