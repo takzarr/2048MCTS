@@ -74,50 +74,55 @@ class MCTSNode:
 #Rollout policy is random action
 def rollout_policy_random(grid):
     actions = get_valid_actions(grid)
-    if not actions:
-        return None
     return random.choice(actions)
 
-#Run simulation from the state until terminal(gameover)
+#Run simulation from the state until terminal(play 2048 game until gameover)
 def rollout(state):
     grid = deepcopy(state)
     total_score = 0
-
     while not gameover(grid):
         action = rollout_policy_random(grid)
-        if action is None:
-            break
         grid, score_gain, moved = apply_action(grid, action)
-        if not moved:
-            continue
-        total_score += score_gain
+        if moved:
+            total_score += score_gain
     return total_score
 
 # Perform mcts search and return best action
 def mcts_search(root_state, num_simulations=50, c_param=1.414):
+    # create instance of MCTS node
     root = MCTSNode(deepcopy(root_state))
+    # for each simulation
     for _ in range(num_simulations):
+        # set current node to root node
         node = root
-        #SELECTION
+        #SELECTION (based on UCB, select successive child nodes until a leaf node is reached)
         while (not node.is_terminal()) and node.is_fully_expanded():
             node = node.best_child(c_param)
 
-        #EXPANSION
+        #EXPANSION (use expand leaf node by 1 node and choose new expanded child leaf node)
+        # if node's state is not gameover and has untried actions
         if (not node.is_terminal()) and node.untried_actions:
+            # get the first untried action in the list (maybe change this to be randomized?)
             action = node.untried_actions.pop()
+            # do action on node's state
             new_state, _, _ = apply_action(deepcopy(node.state), action)
+            # create new instance on MCTS node storing the new state, parent node, and action
             child = MCTSNode(new_state, parent=node, action=action)
+            # append child node to node's children
             node.children.append(child)
+            # set current node to child node
             node = child
 
-        #SIMULATION(ROLLOUT)
+        #SIMULATION (complete one playout from new expanded child left node using the rollout policy)
+        # (is the reward the final score or the highest numbered tile the final score?)
         reward = rollout(node.state)
 
-        #BACKPROPAGATION
+        #BACKPROPAGATION (update all node value's from expanded left node to root node)
+        # for each node
         while node is not None:
-            node.visits += 1
-            node.total_reward += reward
-            node = node.parent
+            node.visits += 1 # increase visit by 1
+            node.total_reward += reward # increase total_reward by reward (metric used for evaluation)
+            node = node.parent # move to next lower branch
 
     #Choose child with highest visit count
     if not root.children:
@@ -131,46 +136,73 @@ def play_mcts_game(num_simulations=50, c_param=1.414):
     total_score = 0
     moves = 0
 
+    # while game is not over
     while not gameover(grid):
-        actions = get_valid_actions(grid)
-        if not actions:
-            break
+        # perform MCTS and get most optimal action
         action = mcts_search(grid, num_simulations=num_simulations, c_param=c_param)
-        if action is None:
-            break
         grid, score_gain, moved = apply_action(grid, action)
-        if not moved:
-            break
-        total_score += score_gain
-        moves += 1
+        if moved:
+            total_score += score_gain
+            moves += 1
     return total_score, max_tile(grid), moves
-
 
 # Run multiple experiments and log results to CSV
 def run_experiments():
     random.seed(0)#for reproducibility
     experiments = [
-        #random agent
-        {"name": "baseline_random", "method": "random",
-         "c_param": None, "num_simulations": None},
-
-        # experiements for c value budget fixed at 30.
-        {"name": "c_sweep_c0.5",   "method": "mcts",
-         "c_param": 0.5,   "num_simulations": 30},
-        {"name": "c_sweep_c1.0",   "method": "mcts",
-         "c_param": 1.0,   "num_simulations": 30},
-        {"name": "c_sweep_c1.414", "method": "mcts",
-         "c_param": 1.414, "num_simulations": 30},
-
-        #experiement for budget c fixed at 1.414
-        {"name": "budget_sweep_b5",   "method": "mcts",
-         "c_param": 1.414, "num_simulations": 5},
-        {"name": "budget_sweep_b15",  "method": "mcts",
-         "c_param": 1.414, "num_simulations": 15},
-        {"name": "budget_sweep_b30",  "method": "mcts",
-         "c_param": 1.414, "num_simulations": 30},
-        {"name": "budget_sweep_b60",  "method": "mcts",
-         "c_param": 1.414, "num_simulations": 60},
+        # random agent experiment
+        {
+            "name": "baseline_random",
+            "method": "random",
+            "c_param": None,
+            "num_simulations": None
+        },
+        # MCTS agent experiements with different exploration constants (c)
+        # and a fixed rollout budget (num_simulations) of value 30.
+        {
+            "name": "c_sweep_c0.5",
+            "method": "mcts",
+            "c_param": 0.5,
+            "num_simulations": 30
+        },
+        {
+            "name": "c_sweep_c1.0",
+            "method": "mcts",
+            "c_param": 1.0,
+            "num_simulations": 30
+        },
+        {
+            "name": "c_sweep_c1.414",
+            "method": "mcts",
+            "c_param": 1.414,
+            "num_simulations": 30
+        },
+        # MCTS agent experiements with different rollout budgets (num_simulations)
+        # and a fixed exploration constant (c) of value 1.414.
+        {
+            "name": "budget_sweep_b5",
+            "method": "mcts",
+            "c_param": 1.414,
+            "num_simulations": 5
+        },
+        {
+            "name": "budget_sweep_b15",
+            "method": "mcts",
+            "c_param": 1.414,
+            "num_simulations": 15
+        },
+        {
+            "name": "budget_sweep_b30",
+            "method": "mcts",
+            "c_param": 1.414,
+            "num_simulations": 30
+        },
+        {
+            "name": "budget_sweep_b60",
+            "method": "mcts",
+            "c_param": 1.414,
+            "num_simulations": 60
+        },
     ]
 
     games_per_setting = 5
@@ -237,5 +269,6 @@ def run_experiments():
                 f"c={c_param}, rollouts={num_simulations}, "
                 f"total time={setting_elapsed:.2f}s"
             )
+
 if __name__ == "__main__":
     run_experiments()
