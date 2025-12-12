@@ -1,2 +1,2 @@
 experiment_name,method,c_param,num_simulations,game_index,final_merges,final_score,max_tile,num_moves
-c_sweep_c0.5,mcts,0.5,30,0,804,14292,1024,818
+c_sweep_c0.5,mcts,0.5,30,0,1392,27016,2048,1406

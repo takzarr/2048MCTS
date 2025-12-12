@@ -129,7 +129,8 @@ def mcts_search(root_state, num_simulations=50, c_param=1.414):
             node = node.parent # move to next lower branch
 
     #Choose child with highest visit count
-    best_child = max(root.children, key=lambda n: n.visits)
+    #best_child = max(root.children, key=lambda n: n.visits)
+    best_child = root.best_child(c_param=c_param)
     
     return best_child.action
 
