@@ -55,6 +55,7 @@ def print_grid(grid):
 
 def right(grid):
     g = deepcopy(grid)
+    total_merges = 0
     total_gain = 0
     moved = False
 
@@ -65,13 +66,15 @@ def right(grid):
         # move non-zero values to the end of list
         shift_row_right(g[r])
         # combines tiles
-        total_gain += combine_row_right(g[r])
+        merges, score_gain = combine_row_right(g[r])
+        total_merges += merges
+        total_gain += score_gain
         # move non-zero values to the end of list
         shift_row_right(g[r])
         # set moved to true if one row's tiles changes value
         if g[r] != original:
             moved = True
-    return g, total_gain, moved
+    return g, total_merges, total_gain, moved
 
 #Shift non zero elements to the right
 def shift_row_right(row):
@@ -85,6 +88,7 @@ def shift_row_right(row):
 
 #Combine row_right
 def combine_row_right(row):
+    merges = 0
     score_gain = 0
     # for row indexes 3 to 1
     for i in range(3, 0, -1):
@@ -94,12 +98,14 @@ def combine_row_right(row):
             row[i] *= 2
             # add tile value to score 
             score_gain += row[i]
+            merges += 1
             # set tile i-1 to 0
             row[i-1] = 0
-    return score_gain
+    return merges, score_gain
 
 def left(grid):
     g = deepcopy(grid)
+    total_merges = 0
     total_gain = 0
     moved = False
 
@@ -110,13 +116,15 @@ def left(grid):
         # move non-zero values to beginning of list
         shift_row_left(g[r])
         # combines tiles
-        total_gain += combine_row_left(g[r])
+        merges, gain = combine_row_left(g[r])
+        total_merges += merges
+        total_gain += gain
         # move non-zero values to beginning of list
         shift_row_left(g[r])
         # set moved to true if one row's tiles changes value
         if g[r] != original:
             moved = True
-    return g, total_gain, moved
+    return g, total_merges, total_gain, moved
 
 #Shift non zero elements to the left
 def shift_row_left(row):
@@ -129,6 +137,7 @@ def shift_row_left(row):
     row[:] = new_row #modify in place
 
 def combine_row_left(row):
+    merges = 0
     score_gain = 0
     # for row indexes 0 to 3
     for i in range(3):
@@ -138,9 +147,10 @@ def combine_row_left(row):
             row[i] *= 2
             # add tile value to score 
             score_gain += row[i]
+            merges += 1
             # set tile i+1 to 0
             row[i+1] = 0
-    return score_gain
+    return merges, score_gain
 
 def transpose(grid):
     return [list(row) for row in zip(*grid)]
@@ -150,43 +160,43 @@ def up(grid):
     # and rows become columns
     transposed = transpose(grid)
     # do left action on tranpose grid
-    move_board, total_gain, moved = left(transposed)
+    move_board, total_merges, total_gain, moved = left(transposed)
     # tranpose the tranpose grid to get original grid
     new_grid = transpose(move_board)
-    return new_grid, total_gain, moved
+    return new_grid, total_merges, total_gain, moved
 
 def down(grid):
     # tranpose the grid so that columns become rows
     # and rows become columns
     transposed = transpose(grid)
     # do right action on tranpose grid
-    move_board, total_gain, moved = right(transposed)
+    move_board, total_merges, total_gain, moved = right(transposed)
     # tranpose the tranpose grid to get original grid
     new_grid = transpose(move_board)
-    return new_grid, total_gain, moved
+    return new_grid, total_merges, total_gain, moved
 
 #apply the correct action to the grid and return the new grid, score gain, and whether any tile moved.
 def apply_action(grid, action):
     if action == "LEFT":
-        new_grid_, score_gain, moved = left(grid)
+        new_grid_, total_merges, score_gain, moved = left(grid)
     elif action == "RIGHT":
-        new_grid_, score_gain, moved = right(grid)
+        new_grid_, total_merges, score_gain, moved = right(grid)
     elif action == "UP":
-        new_grid_, score_gain, moved = up(grid)
+        new_grid_, total_merges, score_gain, moved = up(grid)
     elif action == "DOWN":
-        new_grid_, score_gain, moved = down(grid)
+        new_grid_, total_merges, score_gain, moved = down(grid)
     else:
         raise ValueError(f"Unknown action: {action}")
     # spawn a new random tile if grid tiles moved
     if moved:
         new_tiles(new_grid_)  # spawn a new random tile
-    return new_grid_, score_gain, moved
+    return new_grid_, total_merges, score_gain, moved
 
 #get list of valid actions
 def get_valid_actions(grid):
     valid = []
     for action in ACTIONS:
-        new_grid, _, moved = apply_action(deepcopy(grid), action)
+        _, _, _, moved = apply_action(deepcopy(grid), action)
         if moved:
             valid.append(action)
     return valid
@@ -195,11 +205,6 @@ def get_valid_actions(grid):
 def max_tile(grid):
     return max(max(row) for row in grid)    
 
-#check for number of valid actions or max tile equal to 2048
+#check for number of valid actions
 def gameover(grid):
-    if len(get_valid_actions(grid)) == 0:
-        return True
-    elif max_tile(grid) == 2048:
-        return True
-    else:
-        return False
+    return len(get_valid_actions(grid)) == 0

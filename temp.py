@@ -49,12 +49,6 @@ class MCTSNode:
     def is_fully_expanded(self):
         return len(self.untried_actions) == 0
     
-    def ucb(self, c_param):
-        exploit = (self.total_reward / max_tile(self.state) if max_tile(self.state) != 0 else 0) / self.visits
-        explore = math.sqrt(2 * math.log(self.visits) / self.visits)
-        uct_value = exploit + c_param * explore
-        return uct_value
-
     # Selection using UCB
     def best_child(self, c_param):
         best_value = float("-inf")
@@ -64,7 +58,10 @@ class MCTSNode:
             if child.visits == 0:
                 uct_value = float("inf")
             else:
-                uct_value = child.ucb(c_param=c_param)
+                #exploit = child.total_reward / child.visits
+                exploit = (child.total_merges if child.total_merges != 0 else 0) / child.visits
+                explore = math.sqrt(2 * math.log(self.visits) / child.visits)
+                uct_value = exploit + c_param * explore
             if uct_value > best_value:
                 best_value = uct_value
                 best_nodes = [child]
@@ -91,7 +88,7 @@ def rollout(state):
             total_merges += merge_gain
             total_score += score_gain
             total_moves += 1
-    return total_merges, total_score, total_moves
+    return total_merges, (total_score), total_moves
 
 # Perform mcts search and return best action
 def mcts_search(root_state, num_simulations=50, c_param=1.414):
@@ -132,8 +129,7 @@ def mcts_search(root_state, num_simulations=50, c_param=1.414):
             node = node.parent # move to next lower branch
 
     #Choose child with highest visit count
-    #best_child = max(root.children, key=lambda n: n.visits)
-    best_child = max(root.children, key=lambda n: n.total_reward)
+    best_child = max(root.children, key=lambda n: n.visits)
     
     return best_child.action
 
@@ -169,7 +165,7 @@ def run_experiments():
     ]
 
     games_per_setting = 5
-    output_file = "temp1.csv"
+    output_file = "temp3.csv"
     with open(output_file, mode="w", newline="") as f:
         writer = csv.writer(f)
         writer.writerow([
