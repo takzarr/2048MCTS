@@ -77,6 +77,23 @@ def rollout_policy_random(grid):
     if not actions:
         return None
     return random.choice(actions)
+def rollout_policy_heuristic(grid):
+    actions = get_valid_actions(grid)
+    if not actions:
+        return None
+    
+    # Prefer moves that merge tiles
+    best_merge = -1
+    best_actions = []
+    for action in actions:
+        new_grid_, score_gain, moved = apply_action(deepcopy(grid), action)
+        if score_gain > best_merge:
+            best_merge = score_gain
+            best_actions = [action]
+        elif score_gain == best_merge:
+            best_actions.append(action)
+    
+    return random.choice(best_actions)
 
 
 #Run simulation from the state until terminal(gameover)
@@ -85,7 +102,7 @@ def rollout(state):
     total_score = 0
 
     while not gameover(grid):
-        action = rollout_policy_random(grid)
+        action = rollout_policy_heuristic(grid)
         if action is None:
             break
         grid, score_gain, moved = apply_action(grid, action)
