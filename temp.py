@@ -155,6 +155,13 @@ def play_mcts_game(num_simulations=50, c_param=1.414):
 def run_experiments():
     random.seed(0)#for reproducibility
     experiments = [
+        # random agent experiment
+        {
+            "name": "baseline_random",
+            "method": "random",
+            "c_param": None,
+            "num_simulations": None
+        },
         # MCTS agent experiements with different exploration constants (c)
         # and a fixed rollout budget (num_simulations) of value 30.
         {
@@ -162,6 +169,38 @@ def run_experiments():
             "method": "mcts",
             "c_param": 0.5,
             "num_simulations": 30
+        },
+        {
+            "name": "c_sweep_c1.0",
+            "method": "mcts",
+            "c_param": 1.0,
+            "num_simulations": 30
+        },
+        # MCTS agent experiements with different rollout budgets (num_simulations)
+        # and a fixed exploration constant (c) of value 1.414.
+        {
+            "name": "budget_sweep_b5",
+            "method": "mcts",
+            "c_param": 1.414,
+            "num_simulations": 5
+        },
+        {
+            "name": "budget_sweep_b15",
+            "method": "mcts",
+            "c_param": 1.414,
+            "num_simulations": 15
+        },
+        {
+            "name": "budget_sweep_b30",
+            "method": "mcts",
+            "c_param": 1.414,
+            "num_simulations": 30
+        },
+        {
+            "name": "budget_sweep_b60",
+            "method": "mcts",
+            "c_param": 1.414,
+            "num_simulations": 60
         },
     ]
 
