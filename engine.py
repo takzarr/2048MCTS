@@ -6,12 +6,7 @@ import math
 
 rows, cols = 4, 4
 ACTIONS = ['UP', 'DOWN', 'LEFT', 'RIGHT']
-#grid = [[0 for _ in range(cols)] for _ in range(rows)]
-#grid[1] = [2,2,0,2]
-# grid[0][0] = 2
-# grid[1][0] = 2
-# grid[2][0] = 2
-# grid[3][0] = 2
+
 
 
 #create an instance of the grid with two tiles
@@ -179,20 +174,7 @@ def up(grid):
         shift_col_up(i)
     '''
 
-'''
-def shift_col_up(col):
-    for i in range(3):
-        for row in range(3):
-            if not grid[row][col]:
-                grid[row][col] = grid[row+1][col]
-                grid[row+1][col] = 0
 
-def combine_col_up(col):
-    for row in range(3):
-        if grid[row][col] == grid[row+1][col]:
-            grid[row][col] += grid[row+1][col]
-            grid[row+1][col] = 0
-'''
 
 def down(grid):
     transposed = transpose(grid)
@@ -200,37 +182,11 @@ def down(grid):
     new_grid = transpose(move_board)
     return new_grid, total_gain, moved
 
-'''
-def shift_col_down(col):
-    for i in range(3):
-        for row in range(3,0,-1):
-            if not grid[row][col]:
-                grid[row][col] = grid[row-1][col]
-                grid[row-1][col] = 0
-def combine_col_down(col):
-    for row in range(3,0,-1):
-        if grid[row][col] == grid[row-1][col]:
-            grid[row][col] += grid[row-1][col]
-            grid[row-1][col] = 0
-    
-def gameover():
 
-    if not check_4d(1,1) and not check_4d(1,2) and not check_4d(2,1) and not check_4d(2,2):
-        if grid[0][0] != grid[1][0] and grid[0][0] != grid[0][1] and \
-        grid[3][0] != grid[2][0] and grid[3][0] != grid[3][1] and \
-        grid[0][3] != grid[0][2] and grid[0][3] != grid[1][3] and \
-        grid[3][3] != grid[3][2] and grid[3][3] != grid[2][3]:
-            print("Gameover")
-def check_4d(row,col):
-    if grid[row][col] != grid[row+1][col] and \
-    grid[row][col] != grid[row-1][col] and \
-    grid[row][col] != grid[row][col+1] and \
-    grid[row][col] != grid[row][col-1]:
-        return False
     
-'''
+
 #apply the correct action to the grid and return the new grid, score gain, and whether any tile moved.
-def apply_action(grid, action):
+def apply_action_no_spawn(grid, action):
     if action == "LEFT":
         new_grid_, score_gain, moved = left(grid)
     elif action == "RIGHT":
@@ -242,15 +198,19 @@ def apply_action(grid, action):
     else:
         raise ValueError(f"Unknown action: {action}")
 
+    return new_grid_, score_gain, moved
+
+def apply_action(grid, action):
+    new_grid_, score_gain, moved = apply_action_no_spawn(grid, action)
     if moved:
-        new_tiles(new_grid_)  # spawn a new random tile
+        new_tiles(new_grid_)
     return new_grid_, score_gain, moved
 
 #get list of valid actions
 def get_valid_actions(grid):
     valid = []
     for action in ACTIONS:
-        new_grid, _, moved = apply_action(deepcopy(grid), action)
+        _, _, moved = apply_action_no_spawn(deepcopy(grid), action)
         if moved:
             valid.append(action)
     return valid
@@ -264,14 +224,7 @@ def max_tile(grid):
 
 
 def main():
-    # #Starting tiles
-    # spawn_tiles(2); spawn_tiles(2); print_grid()
 
-    # down(); print_grid()
-    # #new_tiles(); print_grid()
-    # up(); print_grid()
-    # #new_tiles(); print_grid()
-    #gameover()
     pass
 
 
@@ -283,5 +236,3 @@ if __name__ == "__main__":
 
 
             
-
-

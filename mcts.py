@@ -7,7 +7,9 @@ import time
 
 from engine import (
     new_grid,
+    apply_action_no_spawn,
     apply_action,
+    new_tiles,
     get_valid_actions,
     gameover,
     max_tile,
@@ -72,11 +74,32 @@ class MCTSNode:
         return random.choice(best_nodes)
 
 #Rollout policy is random action
-def rollout_policy_random(grid):
+def rollout_policy(grid):
     actions = get_valid_actions(grid)
     if not actions:
         return None
-    return random.choice(actions)
+    
+    best_score = -float('inf')
+    best_actions = []
+    for action in actions:
+        new_grid_, score_gain, moved = apply_action_no_spawn(deepcopy(grid), action)
+        if not moved:
+            continue
+        
+        corner_bonus = max_tile_in_corner(new_grid_)
+        reward = score_gain + corner_bonus
+        
+        if reward > best_score:
+            best_score = reward
+            best_actions = [action]
+        elif reward == best_score:
+            best_actions.append(action)
+    
+    return random.choice(best_actions)
+
+def max_tile_in_corner(grid):
+    corners = [grid[0][0], grid[0][3], grid[3][0], grid[3][3]]
+    return max(corners)
 
 
 #Run simulation from the state until terminal(gameover)
@@ -85,14 +108,17 @@ def rollout(state):
     total_score = 0
 
     while not gameover(grid):
-        action = rollout_policy_random(grid)
+        action = rollout_policy(grid)
         if action is None:
             break
-        grid, score_gain, moved = apply_action(grid, action)
+        grid, score_gain, moved = apply_action_no_spawn(grid, action)
         if not moved:
             continue
+        new_tiles(grid)
         total_score += score_gain
-    return total_score
+    return total_score + max_tile(grid) * 10
+
+
 
 # Perform mcts search and return best action
 def mcts_search(root_state, num_simulations=50, c_param=1.414):
@@ -106,7 +132,9 @@ def mcts_search(root_state, num_simulations=50, c_param=1.414):
         #EXPANSION
         if (not node.is_terminal()) and node.untried_actions:
             action = node.untried_actions.pop()
-            new_state, _, _ = apply_action(deepcopy(node.state), action)
+            new_state, _, moved = apply_action_no_spawn(deepcopy(node.state), action)
+            if moved:
+                new_tiles(new_state)
             child = MCTSNode(new_state, parent=node, action=action)
             node.children.append(child)
             node = child
